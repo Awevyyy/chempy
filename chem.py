@@ -10,7 +10,7 @@ from scipy import stats
 import io
 import re
 
-mypath = ""
+mypath = "C:/Users/Awevy/Documents/datascience/"
 data = pd.read_csv(mypath + "chemistrycasestudy.csv")
 st.set_page_config(layout="wide")
 
@@ -64,16 +64,21 @@ choices_names_no_flashpoint = ["Has Silicon", "Is Metallic", "Has Tin", "Is Acid
 
 
 def fit_distribution(data, target):
+    #Adding the variables dereived from the dataset data and separating them into numeric and categorical
     numvars = [value for value in data.columns if value == "flashpoint"]
     catvars = [value for value in data.columns if value not in numvars + [target]]
+    #Calculating the percentage of Is Acid and Not Acid for prior values which are used in the naive bayes equations
     is_prior = data[target].value_counts(normalize = True)[1]
     not_prior = data[target].value_counts(normalize = True)[0]
+    #copying rows of dataset that describe molecules that are acidic and ones that are not to two different dataframes.
     is_data = data[data[target] == "Yes"].copy()
     not_data = data[data[target] == "No"].copy()
-    
+    #Initialising new dictionaries to sure results
     is_results = {}
     not_results = {} 
+    #Iterating through the numerical variables (only flashpoint in my case)
     for val in numvars:
+        #calculate the distributuion variable with statis.norm(mean, std) for the dataset with acidic molecules and non acidic molecules
         mu = np.mean(is_data[val])
         sigma = np.std(is_data[val])
         dist_is = stats.norm(mu, sigma)
@@ -83,23 +88,26 @@ def fit_distribution(data, target):
         sigma = np.std(not_data[val])
         dist_not = stats.norm(mu, sigma)
         not_results[val] = dist_not.pdf(data[val])
-        
+    #Iterating through the categorical variables. 
     for val in catvars:
+        #Creating two dictionaries with the value counts of each categorical variable segregating them into dict_is (for Acidic molecules) and dict_not (for non Acidic moelcules). 
         dict_is = dict(is_data[val].value_counts(normalize = True))
         dict_not = dict(not_data[val].value_counts(normalize = True))
+        #Using the dictionaries the map the original dataset into the results dictionary.
         is_results[val] = data[val].map(dict_is)
         not_results[val] = data[val].map(dict_not)
-    
+    #Creating two dataframes from the dictionaries with the df.from_dict() function
     is_frame = pd.DataFrame.from_dict(is_results)
     not_frame = pd.DataFrame.from_dict(not_results)
-    
+    #Using the naive bayes theorm to calculate the probabilitiy of each molecule being Acidic or Not Acidic
     prob_is = is_prior * is_frame.prod(axis=1)
     prob_not = not_prior * not_frame.prod(axis=1)
-
+    #Making a dataframe which has two columns, the predicted and the actual values. 
     df = pd.DataFrame()
     df["predicted"] = (prob_is > prob_not) * 1
     df["actual"] = np.where(data[target] == "Yes",1,0)
     
+    #Returns the dataframe containing predicted and actual values and the accuracy (obtained by comparing the two columns)
     accuracy = sum(df["predicted"] == df["actual"])/len(df["actual"])
     return df, accuracy
 
@@ -121,7 +129,7 @@ if selected == "Introduction":
     
 if selected == "Data Cleaning":
     st.markdown("# Data Cleaning")
-    st.write("#### For this dataset, although there are already 4 columns of categorical values, I will need to create more from other text-based columns to ensure best prediction results.")
+    st.write("#### For this dataset<sup>2</sup>, although there are already 4 columns of categorical values, I will need to create more from other text-based columns to ensure best prediction results.", unsafe_allow_html = True)
     st.table(data.head(5))
     st.write("https://github.com/kjappelbaum/awesome-chemistry-datasets")
     st.markdown("## Pre-existing Variables")
@@ -154,9 +162,7 @@ if selected == "Data Cleaning":
 \n data["is_ionic"] = np.where(table, "Yes", "No")""")
 
 if selected == "Data Exploration":
-    st.markdown("# Data Exoploration")
-    st.markdown("### Some interactive test graphs!")
-    st.markdown("### Histogram.exe!")
+    st.markdown("# Data Exploration")
     col,col1=st.columns([3,5])      
     col.header("Histogram for Categorical Values")
     
@@ -166,7 +172,7 @@ if selected == "Data Exploration":
         submitted=st.form_submit_button("Submit to generate your histogram")
         number = 20
         if option1 == "Flashpoint":
-            check1=col.checkbox("Control bin size",key=4)
+            check1=col.checkbox("control bin size",key=4)
             if check1:
                 number=col.number_input('Insert a number',min_value=10,max_value=30,step=5)
         if submitted:
@@ -176,29 +182,30 @@ if selected == "Data Exploration":
                    histnorm="percent", color_discrete_sequence=px.colors.qualitative.Alphabet,nbins = number,labels = reverse,
                    title="Distribution of the variable: '" + option1 + "'", height = 600)
                 col1.plotly_chart(fig2)
-                col1.write("See the graph in is_saturated, we can see that the Yes and No are quite evenly balanced relative to all the other variables!")
+                col1.write("See the graph in Is Saturated, we can see that the Yes and No are quite evenly balanced relative to all the other variables!")
             else:
                 fig2 = px.histogram(data,x=names[option1],
                    barmode="group", color_discrete_sequence=px.colors.qualitative.Alphabet,nbins = number,labels = reverse,
                    title="Distribution of the variable: '" + option1 + "'", height = 600)
                 col1.plotly_chart(fig2)
-                col1.write("See the graph in is_saturated, we can see that the Yes and No are quite evenly balanced relative to all the other variables!")
+                col1.write("See the graph in Is Saturated, we can see that the Yes and No are quite evenly balanced relative to all the other variables!")
            
     col2,col3=st.columns([3,5])      
-    col2.header("Histogram for Categorical Values with is_acid")
+    col2.header("Histogram for Categorical Values with Is Acid")
     with st.form("Submit1"):
         option2 = col2.selectbox("Which value do you want to be the categorical value?", choices_names_no_flashpoint)
         agree1 = col2.checkbox('show data as noramlized percentage %',key=1233)
         bar_norm = None
         hist_norm = None
         if agree1:
-            option9 = col2.selectbox("Which mode of normalization?", ["bar","histogram"])
-            if option9 == "bar":
+            option9 = col2.selectbox("Which variabole do you want to normalize by?", ["Is Acidic",option2])
+            if option9 == "Is Acidic":
                 bar_norm = "percent"
             else:
                 hist_norm = "percent"
-        option3 = col2.selectbox("Which mode?", ["group","overlay","relative"])
-        
+        option3 = col2.selectbox("Which display mode of the bar chart?", ["combined (group)","overlay","relative"])
+        if option3 == "combined (group)":
+            option3 = "group"
         submitted=st.form_submit_button("Submit to generate your histogram")
         if submitted:
             if agree1:
@@ -211,12 +218,16 @@ if selected == "Data Exploration":
                 col3.plotly_chart(fig3)
     
     col4,col5=st.columns([3,5])      
-    col4.header("Histogram for Categorical Values with is_acid against flashpoint")
+    col4.header("Histogram for Categorical Values with Is Acid against Flashpoint")
     with st.form("Submit2"):
         option4 = col4.selectbox("Which value do you want to be the categorical value against flashpoint?", np.setdiff1d(choices_names_no_flashpoint, ["Is Acidic"]))
         agree2 = col4.checkbox('show data as noramlized percentage %', key="23492834asd")
-        option5 = col4.selectbox("Which mode?", ["group","overlay","relative"],key="238yu9hfg9sdhf")
-        option7 = col4.selectbox("Which function?", ["avg","min","max"])
+        option5 = col4.selectbox("Which display mode of the histogram", ["combined (group)","overlay","relative"], key=114514)
+        if option5 == "combined (group)":
+            option5 = "group"
+        option7 = col4.selectbox("Which way to display the sum of the variables?", ["average","minimum","maximum"])
+        keys = {"average": "max", "minimum":"min","maximum":"max"}
+        option7 = keys[option7]
         submitted=st.form_submit_button("Submit to generate your histogram")
         if submitted:
             if agree2:
@@ -288,16 +299,21 @@ if selected == 'Naive Bayes':
 
     with st.expander("Click to see code"):
         st.code("""def fit_distribution(data, target):
+            #Adding the variables dereived from the dataset data and separating them into numeric and categorical
             numvars = [value for value in data.columns if value == "flashpoint"]
             catvars = [value for value in data.columns if value not in numvars + [target]]
+            #Calculating the percentage of Is Acid and Not Acid for prior values which are used in the naive bayes equations
             is_prior = data[target].value_counts(normalize = True)[1]
             not_prior = data[target].value_counts(normalize = True)[0]
+            #copying rows of dataset that describe molecules that are acidic and ones that are not to two different dataframes.
             is_data = data[data[target] == "Yes"].copy()
             not_data = data[data[target] == "No"].copy()
-            
+            #Initialising new dictionaries to sure results
             is_results = {}
             not_results = {} 
+            #Iterating through the numerical variables (only flashpoint in my case)
             for val in numvars:
+                #calculate the distributuion variable with statis.norm(mean, std) for the dataset with acidic molecules and non acidic molecules
                 mu = np.mean(is_data[val])
                 sigma = np.std(is_data[val])
                 dist_is = stats.norm(mu, sigma)
@@ -307,28 +323,31 @@ if selected == 'Naive Bayes':
                 sigma = np.std(not_data[val])
                 dist_not = stats.norm(mu, sigma)
                 not_results[val] = dist_not.pdf(data[val])
-                
+            #Iterating through the categorical variables. 
             for val in catvars:
+                #Creating two dictionaries with the value counts of each categorical variable segregating them into dict_is (for Acidic molecules) and dict_not (for non Acidic moelcules). 
                 dict_is = dict(is_data[val].value_counts(normalize = True))
                 dict_not = dict(not_data[val].value_counts(normalize = True))
+                #Using the dictionaries the map the original dataset into the results dictionary.
                 is_results[val] = data[val].map(dict_is)
                 not_results[val] = data[val].map(dict_not)
-            
+            #Creating two dataframes from the dictionaries with the df.from_dict() function
             is_frame = pd.DataFrame.from_dict(is_results)
             not_frame = pd.DataFrame.from_dict(not_results)
-            
+            #Using the naive bayes theorm to calculate the probabilitiy of each molecule being Acidic or Not Acidic
             prob_is = is_prior * is_frame.prod(axis=1)
             prob_not = not_prior * not_frame.prod(axis=1)
-
+            #Making a dataframe which has two columns, the predicted and the actual values. 
             df = pd.DataFrame()
             df["predicted"] = (prob_is > prob_not) * 1
             df["actual"] = np.where(data[target] == "Yes",1,0)
             
+            #Returns the dataframe containing predicted and actual values and the accuracy (obtained by comparing the two columns)
             accuracy = sum(df["predicted"] == df["actual"])/len(df["actual"])
-            return df, accuracy""")
+            return df, accuracy""", language = "python")
 if selected == 'Data Analysis':
     st.markdown("# Data Analysis")
-    st.write("Add the box plot with flash")
+    st.markdown("### Bar Chart for chisquare")
     agree3 = st.checkbox("Do you want the log the y axis?")
     #TODO bosh the box plot with flashpoint
     chisquares = [round(stats.chi2_contingency(pd.crosstab(data['is_acid'], data[val]))[0],3) for val in np.setdiff1d(true_names, ["flashpoint","is_acid"])]
@@ -337,16 +356,20 @@ if selected == 'Data Analysis':
     fig5 = px.bar(x =pd.Series(np.setdiff1d(true_names, ["flashpoint","is_acid"])).replace(reverse),y=chisquares,log_y=agree3, text=chisquares, hover_name = pvals)
     fig5.update_xaxes(categoryorder="total descending")
     st.plotly_chart(fig5)
-    
-    st.markdown("### Box plot for flashpoint and is_acid")
+    st.markdown("### Box plot for Flashpoint and Is Acidic")
     fig6 = px.box(data,x="flashpoint",y="is_acid", labels = reverse)
     st.plotly_chart(fig6)
+    st.markdown("### Best Predictors")
+    st.write("Firstly, according to the chi-square bar chart there are 5 factors that work the best predicting the the acidity. Those 5 include Flashpoint, Is Metallic, Has Silicon, Is Saturated and Has Amino Group. These five both have a p-value of 0 (ronded to 5 devcimal places) and the flashpoint having a chisquare value of 503. ")
+    st.write("After putting them into the NB predictor model, it yielded a high 91.4% which I later discovered using the prediction table was because it was all predicting 0s, which was honestly kind of disapointing. It was due to the heavy imbalance of my dataset (91.4%:8.6%) that the prior values used in the naive bayes equation heavily skews the results causing 'not acid' to be selected every single time.")
+    st.write("Upon adding more variables that are just ranked behind top 5 in terms of chisquare: Has Hydroxyl Group (sixth) the prediction accuracy dropped from 91.4% to 91.1%... Upon adding all of the variabels that exist it has dropped to a flat 90%!")
+    st.write("However, naive bayes works under the assumption that all of the variables are independent with each other, but using my experimental sunburst graph I have found that if Is Metallic is true, is Silicon is also true and vice versa for nearly all cases. This evidence suggests that they are dependent and therefore only one can be included. I have chosen the one with the more chisquare and more cases which was 'Is Metallic'")
 if selected == "Conclusion":
     st.markdown("# Conclusion")
-    st.write("To summarize, there are 5 factors that work the best predicting the the acidity. Those 5 include Flashpoint, Is Metallic, Has Silicon, Is Saturated and Has Amino Group. These five both have a p-value of 0 (ronded to 5 devcimal places) and the flashpoint having a chisquare value of 503. ")
-    st.write("Through my systematic experimentation... My baseline model has an accuracy 91%")
-    st.write("However, it turns out that due to the heavy imbalance of my dataset (91%:9%) the prior values used in the naive bayes equation heavily skews the results causing not acid to be selected every single time. To counteract this with unconventional ways, I replaced the heavy imbalance with a closer value: with the priors being 0.4 and 0.6. This yielded better results.")
+    st.write("To summarize, due to a high chisquare and a low p-value and after filtering out the ones that are dependant, I have come to the conclusion the best 4 predictors are: High Flashpoint, Is Metallic, Is Saturated and Has Amino Group. Yielding an accuracy of 91.4%!")
+    
     
 if selected == "Bibliography":
     st.markdown("# Bibliography")
     st.write("[1] https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3641858/")
+    st.write("[2] Dataset sourced from GitHub: https://github.com/cheminfo/molecule-features/blob/main/data/flashpoint/data.csv")
