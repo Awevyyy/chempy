@@ -10,7 +10,7 @@ from scipy import stats
 import io
 import re
 
-mypath = ""
+mypath = "C:/Users/Awevy/Documents/datascience/"
 data = pd.read_csv(mypath + "chemistrycasestudy.csv")
 st.set_page_config(layout="wide")
 
@@ -132,6 +132,7 @@ if selected == "Data Cleaning":
     st.write("#### For this dataset<sup>2</sup>, although there are already 4 columns of categorical values, I will need to create more from other text-based columns to ensure best prediction results.", unsafe_allow_html = True)
     st.table(data.head(5))
     st.write("https://github.com/kjappelbaum/awesome-chemistry-datasets")
+    st.write("In this page, I will show you how I create more categorical variables from pre existing variables namely the 'smiles' and 'compouds' by detecting substrings such as an 'c=c' substring forr an alkene.")
     st.markdown("## Pre-existing Variables")
     st.write("compound: The technical name of the chemical/molecule in question")
     st.write("flashpoint: The point (in celcius) lowest temperature at which a liquid emits enough vapor to ignite when exposed to air measured in degrees kelvin")
