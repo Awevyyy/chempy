@@ -10,7 +10,7 @@ from scipy import stats
 import io
 import re
 
-mypath = ""
+mypath = "C:/Users/Awevy/Documents/datascience/"
 data = pd.read_csv(mypath + "chemistrycasestudy.csv")
 st.set_page_config(layout="wide")
 
@@ -124,7 +124,7 @@ with st.sidebar:
     
 if selected == "Introduction":
     st.markdown("# Introduction")
-    st.write("The goal for this casestudy is to make a naive bayes prediction model that can predict wether or not a molecule is acidic or not based upon its name and a smattering of other factors (e.g size, fuiunctional groups) to a high degree of accuracy (90%+). Hopefully, this would aid the scientific world to advance by decreaseing the time needed for acid-base testing.")
+    st.write("The goal for this case study is to make a naive bayes prediction model that can predict whether or not a molecule is acidic or not based upon its name and a smattering of other factors (e.g size, functional groups) to a high degree of accuracy (90%+). Hopefully, this would aid the scientific world to advance by decreaseing the time needed for acid-base testing.")
     st.write("Why is this important? Well because in pharmaceutical research, the acidity of a molecule can provide insights into its behavior in biological systems. Acidic molecules may exhibit specific interactions with target receptors, enzymes, or other biological molecules. Predicting acidity helps in identifying potentially active compounds and designing drug candidates with desired properties<sup>1</sup>.",unsafe_allow_html=True)
     
 if selected == "Data Cleaning":
@@ -163,6 +163,8 @@ if selected == "Data Cleaning":
 
 if selected == "Data Exploration":
     st.markdown("# Data Exploration")
+    st.markdown("### How to use")
+    st.write("Basically, you have to use the column with a selection box to input the variables that you want to be displayed on the graph. Then, alter the other parameters and then when you are done configuring, please press the 'submit' button that is in red in the bottom to generate the graph.")
     col,col1=st.columns([3,5])      
     col.header("Histogram for Categorical Values")
     
@@ -267,7 +269,7 @@ if selected == "Data Exploration":
     
     
     st.markdown("### Chi-Squared Test!")
-    option2 = 'is_metallic'
+    st.write("In really simple terms, the chi-square (χ²) test is a statistical tool used to see if there is a significant difference between the expected values and the observed values in a categorical data set. It helps us determine if the differences between the actual and expected values are due to chance or if there is a meaningful relationship between the variables being studied")
     option2 = st.selectbox("Select a value to see the chi-squared and probability compared to the 'is_acid' variable", ["is_silicon","is_metallic","is_tin","is_acid","is_saturated","is_chloro","is_amino","is_OH","is_small","high_flashpoint","is_alkene"])
     chisquare = stats.chi2_contingency(pd.crosstab(data['is_acid'], data[option2]))[:2] 
     st.write("Chisquare:", str(chisquare[0]))
@@ -281,7 +283,7 @@ if selected == "Data Exploration":
 if selected == 'Naive Bayes':
     st.markdown("# Naive Bayes")
     st.markdown("### What is Naive Bayes?")
-    st.write("Naïve Bayes is one of the fast and easy machine learning algorithms to predict values in datascience. It can and is often used for Binary Classifications (only two possible values) and prerforms well as compared to the other Algorithms. It first assumes the fact that all the variables are independent to each other, then by using probability theorems it works out the probabilities for the two outcomes, selecting the one with the highest probability.")
+    st.write("Naïve Bayes is one of the fast and easy machine learning algorithms to predict values in datascience. It can and is often used for Binary Classifications (only two possible values) and performs well when compared to the other algorithms. It first assumes the fact that all the variables are independent to each other (which means that they are not affected by each other), then by using probability theorems it works out the probabilities for the two outcomes, selecting the one with the highest probability.")
     
     with st.form("Submit4"):
         options = st.multiselect('What columns do you want to be put into the prediction?', choices_names_flashpoint)
@@ -361,9 +363,9 @@ if selected == 'Data Analysis':
     st.plotly_chart(fig6)
     st.markdown("### Best Predictors")
     st.write("Firstly, according to the chi-square bar chart there are 5 factors that work the best predicting the the acidity. Those 5 include Flashpoint, Is Metallic, Has Silicon, Is Saturated and Has Amino Group. These five both have a p-value of 0 (ronded to 5 devcimal places) and the flashpoint having a chisquare value of 503. ")
-    st.write("After putting them into the NB predictor model, it yielded a high 91.4% which I later discovered using the prediction table was because it was all predicting 0s, which was honestly kind of disapointing. It was due to the heavy imbalance of my dataset (91.4%:8.6%) that the prior values used in the naive bayes equation heavily skews the results causing 'not acid' to be selected every single time.")
+    st.write("After putting them into the NB predictor model, it yielded a high 91.4% which I later discovered using the prediction table was because it was all predicting 0s which means that it was predicting everything as 'Not Acidic', which was honestly kind of disapointing. This was due to the heavy imbalance of my dataset (91.4%:8.6%) which altered my prior values (values multiplied into the naive Bayes equations) which heavily skews the results causing 'Not Acidic' to be selected every single time.")
     st.write("Upon adding more variables that are just ranked behind top 5 in terms of chisquare: Has Hydroxyl Group (sixth) the prediction accuracy dropped from 91.4% to 91.1%... Upon adding all of the variabels that exist it has dropped to a flat 90%!")
-    st.write("However, naive bayes works under the assumption that all of the variables are independent with each other, but using my experimental sunburst graph I have found that if Is Metallic is true, is Silicon is also true and vice versa for nearly all cases. This evidence suggests that they are dependent and therefore only one can be included. I have chosen the one with the more chisquare and more cases which was 'Is Metallic'")
+    st.write("However, naive bayes works under the assumption that all of the variables are independent with each other, but using my experimental sunburst graph I have found that if Is Metallic is true, is Silicon is also always true and vice versa for all cases. This evidence suggests that they are dependent (because they affect each other) and therefore only one can be included or else the algorithm would not work best. I have chosen the one with the more chisquare and more cases which was 'Is Metallic'")
 if selected == "Conclusion":
     st.markdown("# Conclusion")
     st.write("To summarize, due to a high chisquare and a low p-value and after filtering out the ones that are dependant, I have come to the conclusion the best 4 predictors are: High Flashpoint, Is Metallic, Is Saturated and Has Amino Group. Yielding an accuracy of 91.4%!")
