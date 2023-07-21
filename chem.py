@@ -10,7 +10,7 @@ from scipy import stats
 import io
 import re
 
-mypath = "C:/Users/Awevy/Documents/datascience/"
+mypath = ""
 data = pd.read_csv(mypath + "chemistrycasestudy.csv")
 st.set_page_config(layout="wide")
 
